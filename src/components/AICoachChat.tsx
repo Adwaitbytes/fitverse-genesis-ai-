@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Send, Mic, Dumbbell, Robot } from "lucide-react";
+import { Send, Mic, Dumbbell, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -56,7 +56,7 @@ const AICoachChat: React.FC = () => {
           <div className="relative mr-3">
             <div className="absolute inset-0 rounded-full animate-pulse-glow" style={{ '--pulse-color': 'rgba(76, 201, 240, 0.6)' } as React.CSSProperties}></div>
             <div className="relative p-2 rounded-full bg-gradient-to-r from-fitverse-blue to-fitverse-purple">
-              <Robot className="w-5 h-5 text-white" />
+              <Bot className="w-5 h-5 text-white" />
             </div>
           </div>
           <div>
