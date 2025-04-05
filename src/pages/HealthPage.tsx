@@ -1,100 +1,132 @@
 
 import React from "react";
-import FitverseHeader from "@/components/FitverseHeader";
-import FitverseNavigation from "@/components/FitverseNavigation";
-import StatsCard from "@/components/StatsCard";
-import ProgressChart from "@/components/ProgressChart";
-import { Activity, Heart, Droplet, Moon } from "lucide-react";
-
-const healthData = [
-  { name: "Mon", value: 72 },
-  { name: "Tue", value: 68 },
-  { name: "Wed", value: 74 },
-  { name: "Thu", value: 70 },
-  { name: "Fri", value: 65 },
-  { name: "Sat", value: 63 },
-  { name: "Sun", value: 67 }
-];
-
-const sleepData = [
-  { name: "Mon", value: 7.5 },
-  { name: "Tue", value: 6.8 },
-  { name: "Wed", value: 8.2 },
-  { name: "Thu", value: 7.0 },
-  { name: "Fri", value: 6.5 },
-  { name: "Sat", value: 8.5 },
-  { name: "Sun", value: 8.0 }
-];
+import Layout from "@/components/Layout";
+import { StatsCard } from "@/components/StatsCard";
+import { Activity, Droplet, Heart, Moon, Scale } from "lucide-react";
+import { ProgressChart } from "@/components/ProgressChart";
+import HealthMetricsForm from "@/components/HealthMetricsForm";
+import { useHealth } from "@/contexts/HealthContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const HealthPage: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+  const { healthMetrics, updateHealthMetrics, healthHistory } = useHealth();
+
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
-      <div className="md:w-16 md:border-r md:border-white/10">
-        <FitverseNavigation />
-      </div>
-      
-      <div className="flex-1 overflow-auto pb-20 md:pb-8">
-        <FitverseHeader />
+    <Layout>
+      <div className="container mx-auto py-6 px-4">
+        <h1 className="text-3xl font-bold text-white mb-6">Health Dashboard</h1>
         
-        <main className="container px-4 py-6 mx-auto">
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold mb-1 text-white">Health Metrics</h1>
-            <p className="text-gray-400">Monitor your vital health statistics</p>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <StatsCard 
-              title="Heart Rate" 
-              value="72 bpm" 
-              icon={<Heart className="w-5 h-5 text-fitverse-pink" />}
-              trend={{ value: 2, isPositive: false }}
-              gradientColor="pink"
-            />
-            <StatsCard 
-              title="Blood Pressure" 
-              value="120/80" 
-              icon={<Activity className="w-5 h-5 text-fitverse-blue" />}
-              trend={{ value: 5, isPositive: true }}
-              gradientColor="blue"
-            />
-            <StatsCard 
-              title="Hydration" 
-              value="1.8L" 
-              icon={<Droplet className="w-5 h-5 text-fitverse-blue" />}
-              trend={{ value: 10, isPositive: true }}
-              gradientColor="blue"
-            />
-            <StatsCard 
-              title="Sleep" 
-              value="7.2 hrs" 
-              icon={<Moon className="w-5 h-5 text-fitverse-purple" />}
-              trend={{ value: 8, isPositive: true }}
-              gradientColor="purple"
-            />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div>
-              <ProgressChart 
-                title="Weekly Heart Rate" 
-                data={healthData} 
-                color="#F72585"
-                unit=" bpm" 
-              />
+        {isAuthenticated ? (
+          <>
+            {healthMetrics ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <StatsCard 
+                  title="Heart Rate" 
+                  value={`${healthMetrics.heartRate} bpm`} 
+                  icon={<Heart className="text-fitverse-pink" />} 
+                />
+                <StatsCard 
+                  title="Blood Pressure" 
+                  value={`${healthMetrics.bloodPressureSystolic}/${healthMetrics.bloodPressureDiastolic}`} 
+                  icon={<Activity className="text-fitverse-blue" />} 
+                />
+                <StatsCard 
+                  title="Hydration" 
+                  value={`${healthMetrics.hydration}%`} 
+                  icon={<Droplet className="text-blue-400" />} 
+                />
+                <StatsCard 
+                  title="Sleep" 
+                  value={`${healthMetrics.sleepHours} hrs`}
+                  icon={<Moon className="text-purple-400" />} 
+                />
+              </div>
+            ) : (
+              <div className="glass-card p-6 mb-6">
+                <p className="text-gray-300 mb-4">
+                  Enter your health metrics below to start tracking your health data.
+                </p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <div className="glass-card p-6">
+                <h2 className="text-xl font-bold text-white mb-4">Update Health Metrics</h2>
+                <HealthMetricsForm 
+                  onSubmit={updateHealthMetrics}
+                  initialData={healthMetrics || undefined}
+                />
+              </div>
+              
+              <div className="glass-card p-6">
+                <h2 className="text-xl font-bold text-white mb-4">Health Trends</h2>
+                {healthHistory.length > 0 ? (
+                  <div className="h-80">
+                    <ProgressChart 
+                      data={healthHistory.map(entry => ({
+                        date: entry.date,
+                        heartRate: entry.heartRate,
+                        systolic: entry.bloodPressureSystolic,
+                        diastolic: entry.bloodPressureDiastolic,
+                        hydration: entry.hydration,
+                        sleep: entry.sleepHours
+                      }))}
+                    />
+                  </div>
+                ) : (
+                  <p className="text-gray-300">
+                    Start tracking your health metrics to see trends over time.
+                  </p>
+                )}
+              </div>
             </div>
-            <div>
-              <ProgressChart 
-                title="Weekly Sleep Duration" 
-                data={sleepData} 
-                color="#7209B7"
-                unit=" hrs" 
-              />
+            
+            <div className="glass-card p-6">
+              <h2 className="text-xl font-bold text-white mb-4">BMI & Body Stats</h2>
+              
+              {healthMetrics ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <StatsCard 
+                    title="Weight" 
+                    value={`${healthMetrics.weight} kg`} 
+                    icon={<Scale className="text-yellow-400" />} 
+                  />
+                  <StatsCard 
+                    title="Height" 
+                    value={`${healthMetrics.height} cm`} 
+                    icon={<Activity className="text-green-400" />} 
+                  />
+                  <StatsCard 
+                    title="BMI" 
+                    value={calculateBMI(healthMetrics.weight, healthMetrics.height).toFixed(1)} 
+                    icon={<Activity className="text-fitverse-blue" />} 
+                  />
+                </div>
+              ) : (
+                <p className="text-gray-300">
+                  Enter your weight and height in the form above to calculate your BMI.
+                </p>
+              )}
             </div>
+          </>
+        ) : (
+          <div className="glass-card p-6">
+            <h2 className="text-xl font-bold text-white mb-4">Sign In Required</h2>
+            <p className="text-gray-300">
+              Please sign in to track and view your health metrics.
+            </p>
           </div>
-        </main>
+        )}
       </div>
-    </div>
+    </Layout>
   );
+};
+
+// Helper function to calculate BMI
+const calculateBMI = (weight: number, height: number): number => {
+  const heightInMeters = height / 100;
+  return weight / (heightInMeters * heightInMeters);
 };
 
 export default HealthPage;

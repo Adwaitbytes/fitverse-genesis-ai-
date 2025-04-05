@@ -3,8 +3,10 @@ import React from "react";
 import { Play, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 interface WorkoutCardProps {
+  id: string;
   title: string;
   category: string;
   duration: string;
@@ -12,21 +14,33 @@ interface WorkoutCardProps {
   difficulty: "beginner" | "intermediate" | "advanced";
   image: string;
   className?: string;
+  onStartWorkout?: (id: string) => void;
 }
 
 const WorkoutCard: React.FC<WorkoutCardProps> = ({
+  id,
   title,
   category,
   duration,
   calories,
   difficulty,
   image,
-  className
+  className,
+  onStartWorkout
 }) => {
+  const navigate = useNavigate();
   const difficultyColor = {
     beginner: "text-green-400",
     intermediate: "text-yellow-400",
     advanced: "text-fitverse-pink"
+  };
+
+  const handleStartWorkout = () => {
+    if (onStartWorkout) {
+      onStartWorkout(id);
+    } else {
+      navigate(`/workouts/${id}`);
+    }
   };
 
   return (
@@ -65,7 +79,10 @@ const WorkoutCard: React.FC<WorkoutCardProps> = ({
           </span>
         </div>
         
-        <Button className="w-full bg-gradient-to-r from-fitverse-blue to-fitverse-purple mt-2 hover:opacity-90 transition-opacity">
+        <Button 
+          onClick={handleStartWorkout}
+          className="w-full bg-gradient-to-r from-fitverse-blue to-fitverse-purple mt-2 hover:opacity-90 transition-opacity"
+        >
           <Play className="w-4 h-4 mr-2" /> Start Workout
         </Button>
       </div>

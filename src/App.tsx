@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { WorkoutProvider } from "./contexts/WorkoutContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { HealthProvider } from "./contexts/HealthContext";
+import { SocialProvider } from "./contexts/SocialContext";
 
 import Index from "./pages/Index";
 import WorkoutsPage from "./pages/WorkoutsPage";
@@ -27,26 +29,30 @@ const App = () => (
     <TooltipProvider>
       <AuthProvider>
         <WorkoutProvider>
-          <SettingsProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/workouts" element={<WorkoutsPage />} />
-                <Route path="/workouts/:workoutId" element={<WorkoutDetailPage />} />
-                <Route path="/health" element={<HealthPage />} />
-                <Route path="/social" element={<SocialPage />} />
-                <Route path="/coach" element={<CoachPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </SettingsProvider>
+          <HealthProvider>
+            <SocialProvider>
+              <SettingsProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/workouts" element={<WorkoutsPage />} />
+                    <Route path="/workouts/:workoutId" element={<WorkoutDetailPage />} />
+                    <Route path="/health" element={<HealthPage />} />
+                    <Route path="/social" element={<SocialPage />} />
+                    <Route path="/coach" element={<CoachPage />} />
+                    <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </BrowserRouter>
+              </SettingsProvider>
+            </SocialProvider>
+          </HealthProvider>
         </WorkoutProvider>
       </AuthProvider>
     </TooltipProvider>

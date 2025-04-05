@@ -21,13 +21,10 @@ export const getGeminiResponse = async (
       };
     }
 
-    // Validate API key format - basic check
-    if (!/^AIza[0-9A-Za-z_-]{35}$/.test(apiKey)) {
-      console.error("Invalid API key format:", apiKey.substring(0, 5) + "...");
-      return {
-        success: false,
-        message: "Invalid API key format. Please check your Gemini AI key in settings."
-      };
+    // Less strict key validation
+    if (!apiKey.startsWith('AIza') || apiKey.length < 30) {
+      console.error("Potentially invalid API key format");
+      // Continue anyway since some keys might have different formats
     }
 
     // Use the Gemini API to get a response

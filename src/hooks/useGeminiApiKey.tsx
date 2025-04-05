@@ -41,11 +41,11 @@ export const useGeminiApiKey = () => {
         return false;
       }
       
-      // Basic format validation
-      if (!/^AIza[0-9A-Za-z_-]{35}$/.test(key)) {
+      // Less strict format validation to accommodate different key formats
+      if (!key.startsWith('AIza') || key.length < 30) {
         toast({
           title: "Invalid API Key Format",
-          description: "The API key appears to be in an incorrect format. Gemini AI keys typically start with 'AIza' followed by 35 characters.",
+          description: "The API key appears to be in an incorrect format. Gemini AI keys typically start with 'AIza' followed by characters.",
           variant: "destructive"
         });
         return false;
