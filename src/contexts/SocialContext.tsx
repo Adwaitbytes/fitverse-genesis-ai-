@@ -22,7 +22,7 @@ const SAMPLE_POSTS: Post[] = [
     userId: 'system',
     userName: 'FitVerse Coach',
     userImage: 'https://randomuser.me/api/portraits/men/32.jpg',
-    content: 'Just completed a 5km run! Feeling great about my progress this week. How's everyone else doing with their cardio goals?',
+    content: 'Just completed a 5km run! Feeling great about my progress this week. How\'s everyone else doing with their cardio goals?',
     likes: ['1'],
     comments: [
       {
