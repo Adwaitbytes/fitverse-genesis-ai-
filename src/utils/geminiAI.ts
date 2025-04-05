@@ -23,9 +23,10 @@ export const getGeminiResponse = async (
 
     // Validate API key format - basic check
     if (!/^AIza[0-9A-Za-z_-]{35}$/.test(apiKey)) {
+      console.error("Invalid API key format:", apiKey.substring(0, 5) + "...");
       return {
         success: false,
-        message: "Invalid API key format. Please check your Gemini AI key."
+        message: "Invalid API key format. Please check your Gemini AI key in settings."
       };
     }
 
@@ -60,6 +61,17 @@ export const getGeminiResponse = async (
     
     if (data.error) {
       console.error("Gemini API error:", data.error);
+      
+      // Check for invalid API key error
+      if (data.error.code === 401 || 
+          (data.error.status === "UNAUTHENTICATED") || 
+          data.error.message.includes("API key")) {
+        return {
+          success: false,
+          message: "Invalid API key. Please check your Gemini AI key in settings."
+        };
+      }
+      
       return {
         success: false,
         message: data.error.message || "Error connecting to Gemini AI"

@@ -92,6 +92,16 @@ const WorkoutsPage: React.FC = () => {
     navigate(`/workouts/${id}`);
   };
 
+  const handleTabChange = (tabValue: string) => {
+    const tabElement = document.querySelector(`[data-value="${tabValue}"]`);
+    if (tabElement) {
+      // Fixed: Use better DOM manipulation approach instead of .click()
+      (tabElement as HTMLElement).focus();
+      (tabElement as HTMLElement).dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      (tabElement as HTMLElement).dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       <div className="md:w-16 md:border-r md:border-white/10">
@@ -221,7 +231,7 @@ const WorkoutsPage: React.FC = () => {
                         "You haven't added any workouts to your collection yet"}
                     </p>
                     <Button 
-                      onClick={() => document.querySelector('[data-state="inactive"][data-value="all-workouts"]')?.click()}
+                      onClick={() => handleTabChange("all-workouts")}
                       className="bg-fitverse-blue hover:bg-fitverse-blue/80"
                     >
                       <PlusCircle className="w-4 h-4 mr-2" />
@@ -264,7 +274,8 @@ const WorkoutsPage: React.FC = () => {
         </main>
       </div>
       
-      <style jsx>{`
+      {/* Fixed: Use proper CSS in style tag */}
+      <style>{`
         .dropdown {
           position: relative;
           display: inline-block;

@@ -24,15 +24,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Updated mock user data with proper types
+interface MockUser extends User {
+  password: string;
+}
+
 // Mock user data for demonstration
-const MOCK_USERS = [
+const MOCK_USERS: MockUser[] = [
   {
     id: '1',
     name: 'Demo User',
     email: 'demo@example.com',
     password: 'password123',
     profileImage: 'https://randomuser.me/api/portraits/men/32.jpg',
-    fitnessLevel: 'intermediate' as const,
+    fitnessLevel: 'intermediate',
     fitnessGoals: ['Muscle gain', 'Improved endurance'],
     geminiApiKey: ''
   }
@@ -91,21 +96,25 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       throw new Error('Email already in use');
     }
     
-    const newUser = {
+    // Create new user with proper types
+    const newUser: MockUser = {
       id: `${MOCK_USERS.length + 1}`,
       name,
       email,
-      fitnessLevel: 'beginner' as const,
+      password,
+      profileImage: '', // Add default empty profileImage to match type
+      fitnessLevel: 'beginner',
       fitnessGoals: [],
       geminiApiKey: ''
     };
     
     // In a real app, we'd save this to the database
-    MOCK_USERS.push({...newUser, password});
+    MOCK_USERS.push(newUser);
     
-    setUser(newUser);
+    const { password: pwd, ...userWithoutPassword } = newUser;
+    setUser(userWithoutPassword);
     setIsAuthenticated(true);
-    localStorage.setItem('fitverse_user', JSON.stringify(newUser));
+    localStorage.setItem('fitverse_user', JSON.stringify(userWithoutPassword));
     
     toast({
       title: "Registration Successful",
