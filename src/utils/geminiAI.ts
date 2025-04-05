@@ -21,12 +21,6 @@ export const getGeminiResponse = async (
       };
     }
 
-    // Less strict key validation
-    if (!apiKey.startsWith('AIza') || apiKey.length < 30) {
-      console.error("Potentially invalid API key format");
-      // Continue anyway since some keys might have different formats
-    }
-
     // Use the Gemini API to get a response
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent', {
       method: 'POST',

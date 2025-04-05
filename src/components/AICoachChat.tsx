@@ -26,12 +26,15 @@ const defaultMessages: Message[] = [
   }
 ];
 
+// Default API key for demo purposes
+const DEFAULT_API_KEY = 'AIzaSyAE9XvYg-cYkMeJbyLP2B05QXURAmMFKzU';
+
 const AICoachChat: React.FC = () => {
   const { user, updateApiKey } = useAuth();
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>(defaultMessages);
   const [isLoading, setIsLoading] = useState(false);
-  const [apiKey, setApiKey] = useState(user?.geminiApiKey || "");
+  const [apiKey, setApiKey] = useState(user?.geminiApiKey || DEFAULT_API_KEY);
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -45,14 +48,18 @@ const AICoachChat: React.FC = () => {
   // Check if API key exists on component mount
   useEffect(() => {
     if (!user?.geminiApiKey) {
-      // Only auto-open dialog if user is logged in and has no API key
+      // Save default API key if user is logged in but has no API key
       if (user) {
-        setIsApiKeyDialogOpen(true);
+        updateApiKey(DEFAULT_API_KEY);
+      }
+      // Store default API key in localStorage
+      if (!localStorage.getItem('gemini_api_key')) {
+        localStorage.setItem('gemini_api_key', DEFAULT_API_KEY);
       }
     } else {
       setApiKey(user.geminiApiKey);
     }
-  }, [user]);
+  }, [user, updateApiKey]);
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
@@ -70,23 +77,8 @@ const AICoachChat: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Get API key - first try from state, then from user object
-      const currentApiKey = apiKey || user?.geminiApiKey || "";
-      
-      if (!currentApiKey) {
-        setMessages(prev => [
-          ...prev,
-          {
-            id: "api-key-error",
-            text: "Please enter your Gemini AI API key in settings to use the AI Coach.",
-            isUser: false,
-            timestamp: new Date()
-          }
-        ]);
-        setIsApiKeyDialogOpen(true);
-        setIsLoading(false);
-        return;
-      }
+      // Get API key - first try from state, then from user object, then default
+      const currentApiKey = apiKey || user?.geminiApiKey || DEFAULT_API_KEY;
       
       const response = await getGeminiResponse(input, currentApiKey);
       
@@ -132,6 +124,7 @@ const AICoachChat: React.FC = () => {
   const saveApiKey = () => {
     if (apiKey) {
       updateApiKey(apiKey);
+      localStorage.setItem('gemini_api_key', apiKey);
       setIsApiKeyDialogOpen(false);
     }
   };
@@ -161,8 +154,8 @@ const AICoachChat: React.FC = () => {
                       <DialogHeader>
                         <DialogTitle>Gemini AI API Key</DialogTitle>
                         <DialogDescription>
-                          Enter your Gemini AI API key to enable the AI Coach. 
-                          You can get a key from <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="text-fitverse-blue hover:underline">Google AI Studio</a>.
+                          A default API key is already configured. You can keep using it or enter your own key.
+                          Get your own key from <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="text-fitverse-blue hover:underline">Google AI Studio</a>.
                         </DialogDescription>
                       </DialogHeader>
                       
@@ -258,9 +251,9 @@ const AICoachChat: React.FC = () => {
         </div>
         
         {!user && (
-          <div className="mt-2 text-xs text-amber-400 flex items-center">
-            <Info className="w-3 h-3 mr-1" />
-            <span>Sign in to save your API key and chat history</span>
+          <div className="mt-2 text-xs flex items-center">
+            <Info className="w-3 h-3 mr-1 text-fitverse-blue" />
+            <span className="text-gray-300">AI coach is ready to use - no sign in required</span>
           </div>
         )}
       </div>

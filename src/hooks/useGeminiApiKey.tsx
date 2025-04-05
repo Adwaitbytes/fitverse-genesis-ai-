@@ -3,8 +3,11 @@ import { useState, useEffect } from 'react';
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 
+// Default API key that's pre-filled for the demo
+const DEFAULT_API_KEY = 'AIzaSyAE9XvYg-cYkMeJbyLP2B05QXURAmMFKzU';
+
 export const useGeminiApiKey = () => {
-  const [apiKey, setApiKey] = useState<string>('');
+  const [apiKey, setApiKey] = useState<string>(DEFAULT_API_KEY);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { user, updateApiKey } = useAuth();
 
@@ -23,6 +26,12 @@ export const useGeminiApiKey = () => {
       // If we have a user but no API key in their profile, update it
       if (user && !user.geminiApiKey) {
         updateApiKey(storedApiKey);
+      }
+    } else {
+      // Set the default API key if nothing was found
+      localStorage.setItem('gemini_api_key', DEFAULT_API_KEY);
+      if (user) {
+        updateApiKey(DEFAULT_API_KEY);
       }
     }
     setIsLoading(false);
@@ -80,15 +89,15 @@ export const useGeminiApiKey = () => {
   const clearApiKey = () => {
     try {
       localStorage.removeItem('gemini_api_key');
-      setApiKey('');
+      setApiKey(DEFAULT_API_KEY); // Reset to default instead of empty string
       
       // Also update user profile if authenticated
       if (user) {
-        updateApiKey('');
+        updateApiKey(DEFAULT_API_KEY);
       } else {
         toast({
-          title: "API Key Removed",
-          description: "Your Gemini AI API key has been removed.",
+          title: "API Key Reset",
+          description: "Your Gemini AI API key has been reset to the default.",
         });
       }
       
