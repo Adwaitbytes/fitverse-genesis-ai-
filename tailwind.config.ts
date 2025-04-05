@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,15 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// FitVerse custom colors
+				fitverse: {
+					dark: '#050A30',
+					blue: '#4CC9F0',
+					purple: '#7209B7',
+					pink: '#F72585',
+					accent: '#3A0CA3',
+					light: '#F1FAEE'
 				}
 			},
 			borderRadius: {
@@ -84,11 +94,42 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0px)' },
+					'50%': { transform: 'translateY(-10px)' }
+				},
+				'pulse-glow': {
+					'0%, 100%': { 
+						opacity: '1',
+						boxShadow: '0 0 20px 2px var(--pulse-color, rgba(76, 201, 240, 0.6))'
+					},
+					'50%': { 
+						opacity: '0.7',
+						boxShadow: '0 0 30px 5px var(--pulse-color, rgba(76, 201, 240, 0.3))'
+					}
+				},
+				'rotate-3d': {
+					'0%': { transform: 'rotateY(0deg)' },
+					'100%': { transform: 'rotateY(360deg)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'float': 'float 3s ease-in-out infinite',
+				'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+				'rotate-3d': 'rotate-3d 15s linear infinite'
+			},
+			boxShadow: {
+				'neon-blue': '0 0 5px #4CC9F0, 0 0 20px rgba(76, 201, 240, 0.8)',
+				'neon-purple': '0 0 5px #7209B7, 0 0 20px rgba(114, 9, 183, 0.8)',
+				'neon-pink': '0 0 5px #F72585, 0 0 20px rgba(247, 37, 133, 0.8)',
+				'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)'
+			},
+			backgroundImage: {
+				'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
+				'fitness-pattern': 'url("/fitness-pattern.svg")'
 			}
 		}
 	},
