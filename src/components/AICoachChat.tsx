@@ -1,250 +1,268 @@
 
-import React, { useState, useRef, useEffect } from "react";
-import { Send, Mic, Dumbbell, Bot, Loader2 } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Bot, Send, Info, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/components/ui/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { getGeminiResponse } from "@/utils/geminiAI";
-import { Textarea } from "@/components/ui/textarea";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
+import { Label } from "@/components/ui/label";
 
 interface Message {
   id: string;
-  sender: "user" | "ai";
   text: string;
+  isUser: boolean;
   timestamp: Date;
 }
 
-const AICoachChat: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      sender: "ai",
-      text: "Hi there! I'm your AI fitness coach. How can I help you today?",
-      timestamp: new Date()
-    }
-  ]);
-  const [input, setInput] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [apiKey, setApiKey] = useState<string>(() => {
-    return localStorage.getItem("geminiApiKey") || "";
-  });
-  const [showApiKeyInput, setShowApiKeyInput] = useState(!localStorage.getItem("geminiApiKey"));
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
-  const isMobile = useIsMobile();
+const defaultMessages: Message[] = [
+  {
+    id: "welcome",
+    text: "Hi there! I'm your FitVerse AI Coach. How can I help with your fitness journey today?",
+    isUser: false,
+    timestamp: new Date()
+  }
+];
 
-  // Auto-scroll to the latest message
+const AICoachChat: React.FC = () => {
+  const { user, updateApiKey } = useAuth();
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<Message[]>(defaultMessages);
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiKey, setApiKey] = useState(user?.geminiApiKey || "");
+  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  const saveApiKey = (key: string) => {
-    localStorage.setItem("geminiApiKey", key);
-    setApiKey(key);
-    setShowApiKeyInput(false);
-    toast({
-      title: "API Key Saved",
-      description: "Your Gemini AI API key has been saved successfully.",
-    });
-  };
+  
+  // Check if API key exists on component mount
+  useEffect(() => {
+    if (!user?.geminiApiKey) {
+      // Only auto-open dialog if user is logged in and has no API key
+      if (user) {
+        setIsApiKeyDialogOpen(true);
+      }
+    } else {
+      setApiKey(user.geminiApiKey);
+    }
+  }, [user]);
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
     
-    if (!apiKey) {
-      setShowApiKeyInput(true);
-      toast({
-        title: "API Key Required",
-        description: "Please enter your Gemini AI API key to continue.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Add user message
-    const newUserMessage: Message = {
+    // Add user message to chat
+    const userMessage: Message = {
       id: Date.now().toString(),
-      sender: "user",
       text: input,
+      isUser: true,
       timestamp: new Date()
     };
     
-    setMessages(prev => [...prev, newUserMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInput("");
-    setIsProcessing(true);
+    setIsLoading(true);
     
     try {
-      // Get response from Gemini AI
-      const response = await getGeminiResponse(input, apiKey);
+      // Get API key - first try from state, then from user object
+      const currentApiKey = apiKey || user?.geminiApiKey || "";
       
-      // Create AI response message
-      const aiResponse: Message = {
+      if (!currentApiKey) {
+        setMessages(prev => [
+          ...prev,
+          {
+            id: "api-key-error",
+            text: "Please enter your Gemini AI API key in settings to use the AI Coach.",
+            isUser: false,
+            timestamp: new Date()
+          }
+        ]);
+        setIsApiKeyDialogOpen(true);
+        setIsLoading(false);
+        return;
+      }
+      
+      const response = await getGeminiResponse(input, currentApiKey);
+      
+      const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        sender: "ai",
         text: response.success 
           ? response.message 
-          : "I'm having trouble connecting to my AI services. Please check your API key or try again later.",
+          : `Error: ${response.message}. Please check your API key.`,
+        isUser: false,
         timestamp: new Date()
       };
       
-      setMessages(prev => [...prev, aiResponse]);
+      setMessages(prev => [...prev, aiMessage]);
       
       if (!response.success) {
-        toast({
-          title: "Connection Error",
-          description: response.message,
-          variant: "destructive"
-        });
+        // If there's an API error, prompt to update the key
+        setIsApiKeyDialogOpen(true);
       }
     } catch (error) {
-      console.error("Error in AI response:", error);
-      
-      // Add error message
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        sender: "ai",
-        text: "Sorry, I encountered an error. Please try again later.",
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
+      console.error("Error sending message:", error);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: "error",
+          text: "Sorry, I couldn't process your request. Please try again later.",
+          isUser: false,
+          timestamp: new Date()
+        }
+      ]);
     } finally {
-      setIsProcessing(false);
+      setIsLoading(false);
+      inputRef.current?.focus();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const saveApiKey = () => {
+    if (apiKey) {
+      updateApiKey(apiKey);
+      setIsApiKeyDialogOpen(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-full glass-card overflow-hidden">
-      {/* Header */}
-      <div className="p-3 md:p-4 border-b border-white/10 bg-fitverse-dark/50 backdrop-blur-md">
+    <div className="h-full flex flex-col glass-card rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between p-3 border-b border-white/10">
         <div className="flex items-center">
-          <div className="relative mr-3">
-            <div className="absolute inset-0 rounded-full animate-pulse-glow" style={{ '--pulse-color': 'rgba(76, 201, 240, 0.6)' } as React.CSSProperties}></div>
-            <div className="relative p-2 rounded-full bg-gradient-to-r from-fitverse-blue to-fitverse-purple">
-              <Bot className="w-5 h-5 text-white" />
-            </div>
+          <div className="bg-fitverse-blue/20 p-2 rounded-full mr-2">
+            <Bot className="w-5 h-5 text-fitverse-blue" />
           </div>
-          <div>
-            <h3 className="font-bold text-white text-sm md:text-base">FitVerse AI Coach</h3>
-            <p className="text-xs text-gray-400">Powered by Gemini AI</p>
-          </div>
+          <h3 className="font-semibold text-white">FitVerse AI Coach</h3>
+        </div>
+        
+        <div className="flex items-center space-x-1">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
+                        <Settings2 className="w-4 h-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Gemini AI API Key</DialogTitle>
+                        <DialogDescription>
+                          Enter your Gemini AI API key to enable the AI Coach. 
+                          You can get a key from <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="text-fitverse-blue hover:underline">Google AI Studio</a>.
+                        </DialogDescription>
+                      </DialogHeader>
+                      
+                      <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="apiKey">API Key</Label>
+                          <Input
+                            id="apiKey"
+                            type="password"
+                            placeholder="AIza..."
+                            value={apiKey}
+                            onChange={(e) => setApiKey(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      
+                      <DialogFooter>
+                        <Button onClick={saveApiKey} className="bg-fitverse-blue hover:bg-fitverse-blue/80">
+                          Save
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>API Settings</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
       
-      {/* API Key Input */}
-      {showApiKeyInput && (
-        <div className="p-3 md:p-4 border-b border-white/10 bg-fitverse-dark/60 backdrop-blur-md">
-          <div className="flex flex-col space-y-2">
-            <p className="text-xs text-gray-300">Enter your Gemini AI API key to enable the AI coach:</p>
-            <div className="flex gap-2">
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Paste your Gemini AI key here"
-                className="flex-1 bg-glass-gradient backdrop-blur-md rounded-lg px-3 py-2 text-xs md:text-sm border border-white/10 focus:outline-none focus:ring-2 focus:ring-fitverse-blue/50 text-white"
-              />
-              <Button 
-                onClick={() => saveApiKey(apiKey)}
-                className="bg-gradient-to-r from-fitverse-blue to-fitverse-purple text-white text-xs"
-                size="sm"
-              >
-                Save
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Message List */}
-      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4">
-        {messages.map(message => (
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map((message) => (
           <div
             key={message.id}
             className={cn(
               "flex",
-              message.sender === "user" ? "justify-end" : "justify-start"
+              message.isUser ? "justify-end" : "justify-start"
             )}
           >
-            <div 
+            <div
               className={cn(
-                "max-w-[85%] p-2 md:p-3 rounded-xl text-sm",
-                message.sender === "user" 
-                  ? "bg-fitverse-blue/20 text-white rounded-tr-none" 
-                  : "bg-glass-gradient backdrop-blur-sm border border-white/10 rounded-tl-none"
+                "max-w-[80%] rounded-2xl px-4 py-2",
+                message.isUser
+                  ? "bg-fitverse-blue/20 text-white"
+                  : "bg-fitverse-purple/20 text-white"
               )}
             >
-              {message.text}
-              <div className="text-right mt-1">
-                <span className="text-xs text-gray-400">
-                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+              <p className="whitespace-pre-wrap">{message.text}</p>
+              <div className="text-xs opacity-50 mt-1">
+                {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
           </div>
         ))}
         <div ref={messagesEndRef} />
         
-        {/* Processing indicator */}
-        {isProcessing && (
+        {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-glass-gradient backdrop-blur-sm border border-white/10 rounded-xl rounded-tl-none p-3 max-w-[85%]">
-              <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 text-fitverse-blue animate-spin" />
-                <span className="text-sm text-gray-300">Thinking...</span>
+            <div className="bg-fitverse-purple/20 max-w-[80%] rounded-2xl px-4 py-2 text-white">
+              <div className="flex space-x-2">
+                <div className="animate-bounce">•</div>
+                <div className="animate-bounce delay-75">•</div>
+                <div className="animate-bounce delay-150">•</div>
               </div>
             </div>
           </div>
         )}
       </div>
       
-      {/* Input Area */}
-      <div className="p-3 md:p-4 border-t border-white/10 bg-fitverse-dark/50 backdrop-blur-md">
+      <div className="p-3 border-t border-white/10">
         <div className="relative">
-          {isMobile ? (
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
-              placeholder="Ask your AI coach..."
-              className="w-full bg-glass-gradient backdrop-blur-md rounded-full px-4 py-2 pl-10 pr-16 border border-white/10 focus:outline-none focus:ring-2 focus:ring-fitverse-blue/50 text-white text-sm"
-            />
-          ) : (
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), handleSendMessage())}
-              placeholder="Ask your AI coach..."
-              className="w-full bg-glass-gradient backdrop-blur-md rounded-2xl px-4 py-2 pl-10 pr-16 border border-white/10 focus:outline-none focus:ring-2 focus:ring-fitverse-blue/50 text-white text-sm min-h-[44px] resize-none"
-              rows={1}
-            />
-          )}
-          
-          <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-            <Dumbbell className="w-4 h-4 text-fitverse-blue" />
-          </div>
-          
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="h-8 w-8 rounded-full text-fitverse-purple hover:text-fitverse-blue hover:bg-transparent mr-1"
-            >
-              <Mic className="w-4 h-4" />
-            </Button>
-            
-            <Button 
-              onClick={handleSendMessage}
-              disabled={isProcessing || !input.trim()}
-              className="h-8 w-8 rounded-full bg-gradient-to-r from-fitverse-blue to-fitverse-purple text-white hover:opacity-90 disabled:opacity-50"
-              size="icon"
-            >
-              <Send className="w-3 h-3" />
-            </Button>
-          </div>
+          <Input
+            ref={inputRef}
+            placeholder="Ask your fitness coach..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="pr-10 text-white"
+            disabled={isLoading}
+          />
+          <Button
+            size="icon"
+            variant="ghost"
+            className="absolute right-0 top-0 text-white"
+            onClick={handleSendMessage}
+            disabled={isLoading || !input.trim()}
+          >
+            <Send className="w-4 h-4" />
+          </Button>
         </div>
+        
+        {!user && (
+          <div className="mt-2 text-xs text-amber-400 flex items-center">
+            <Info className="w-3 h-3 mr-1" />
+            <span>Sign in to save your API key and chat history</span>
+          </div>
+        )}
       </div>
     </div>
   );

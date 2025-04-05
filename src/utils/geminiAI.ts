@@ -21,8 +21,16 @@ export const getGeminiResponse = async (
       };
     }
 
+    // Validate API key format - basic check
+    if (!/^AIza[0-9A-Za-z_-]{35}$/.test(apiKey)) {
+      return {
+        success: false,
+        message: "Invalid API key format. Please check your Gemini AI key."
+      };
+    }
+
     // Use the Gemini API to get a response
-    const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -51,6 +59,7 @@ export const getGeminiResponse = async (
     const data = await response.json();
     
     if (data.error) {
+      console.error("Gemini API error:", data.error);
       return {
         success: false,
         message: data.error.message || "Error connecting to Gemini AI"
