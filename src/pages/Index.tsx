@@ -22,6 +22,7 @@ const activityData = [
 
 const workouts = [
   {
+    id: "sample-1", // Added id property
     title: "Full Body HIIT",
     category: "HIIT",
     duration: "30 min",
@@ -30,6 +31,7 @@ const workouts = [
     image: "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
   },
   {
+    id: "sample-2", // Added id property
     title: "Core Crusher",
     category: "Strength",
     duration: "25 min",

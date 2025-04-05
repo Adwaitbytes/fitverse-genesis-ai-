@@ -1,9 +1,9 @@
 
 import React from "react";
 import Layout from "@/components/Layout";
-import { StatsCard } from "@/components/StatsCard";
+import StatsCard from "@/components/StatsCard";
 import { Activity, Droplet, Heart, Moon, Scale } from "lucide-react";
-import { ProgressChart } from "@/components/ProgressChart";
+import ProgressChart from "@/components/ProgressChart";
 import HealthMetricsForm from "@/components/HealthMetricsForm";
 import { useHealth } from "@/contexts/HealthContext";
 import { useAuth } from "@/contexts/AuthContext";
