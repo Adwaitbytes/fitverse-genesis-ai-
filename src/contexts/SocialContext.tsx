@@ -41,7 +41,7 @@ const SAMPLE_POSTS: Post[] = [
     userId: 'system',
     userName: 'Sarah Fitness',
     userImage: 'https://randomuser.me/api/portraits/women/44.jpg',
-    content: 'Here's a quick protein-packed breakfast idea for you all: Greek yogurt with berries, honey, and a sprinkle of granola. Perfect fuel for morning workouts!',
+    content: 'Here\'s a quick protein-packed breakfast idea for you all: Greek yogurt with berries, honey, and a sprinkle of granola. Perfect fuel for morning workouts!',
     image: 'https://images.unsplash.com/photo-1484723091739-30a097e8f929?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     likes: [],
     comments: [],
